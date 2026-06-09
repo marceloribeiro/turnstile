@@ -105,11 +105,7 @@ export function Stat({
     <div className="flex flex-col gap-1">
       <span className="text-xs font-semibold uppercase tracking-wide text-white/50">{label}</span>
       <span
-        className={`font-semibold ${
-          accent
-            ? "bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent"
-            : "text-white"
-        }`}
+        className={`tnum font-semibold ${accent ? "stat-accent" : "text-white"}`}
         style={{ fontSize: accent ? "2.6rem" : "1.5rem", lineHeight: 1.1 }}
       >
         {value}

@@ -10,8 +10,8 @@ export function AppShell({ children, nav }: { children: ReactNode; nav?: ReactNo
   const { user, logout } = useAuth();
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-10 px-6 py-4">
-        <div className="glass mx-auto flex max-w-6xl items-center gap-4 rounded-2xl px-5 py-3">
+      <header className="topbar sticky top-0 z-10">
+        <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-3.5">
           <Link href="/dashboard" aria-label="Turnstile home">
             <Brand size={28} withText />
           </Link>

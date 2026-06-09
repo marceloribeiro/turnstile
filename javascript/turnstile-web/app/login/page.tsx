@@ -58,7 +58,7 @@ export default function LoginPage() {
         </Button>
         <p className="muted text-center text-sm">
           No account?{" "}
-          <Link href="/register" className="text-indigo-300 hover:text-indigo-200">
+          <Link href="/register" className="link">
             Create one
           </Link>
         </p>
