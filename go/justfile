@@ -6,13 +6,22 @@ set dotenv-load := true
 install:
     go build ./...
 
-# Run the data plane on PORT (default 8080); the control plane binds to PORT+1.
-# Pass a port to run several instances side by side — one per project/key
-# (space ports by 2 so control planes don't collide):
-#   TURNSTILE_INGEST_KEY=gr_projectA just up 8080
-#   TURNSTILE_INGEST_KEY=gr_projectB just up 8082
-up port="8080":
-    TURNSTILE_LISTEN=":{{port}}" TURNSTILE_CONTROL_LISTEN="127.0.0.1:$(( {{port}} + 1 ))" go run ./cmd/turnstile
+# Run the data plane.
+#   just up         → ports come from .env (TURNSTILE_LISTEN / _CONTROL_LISTEN), or
+#                     the defaults :8080 / :8081
+#   just up 8090    → data :8090, control :8091 (overrides .env; control is PORT+1)
+# Run several side by side, each with its own ingest key (space ports by 2 so the
+# control planes don't collide):
+#   TURNSTILE_INGEST_KEY=ts_projectA just up 8080
+#   TURNSTILE_INGEST_KEY=ts_projectB just up 8082
+up port="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "{{port}}" ]; then
+      export TURNSTILE_LISTEN=":{{port}}"
+      export TURNSTILE_CONTROL_LISTEN="127.0.0.1:$(( {{port}} + 1 ))"
+    fi
+    go run ./cmd/turnstile
 
 # Build a release binary into bin/.
 build:
