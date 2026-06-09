@@ -111,6 +111,30 @@ def test_ingest_upserts_not_duplicates(client):
     assert sessions[0]["requests"] == 5 and sessions[0]["cost"] == 0.5  # absolute overwrite
 
 
+def test_get_single_session(client):
+    tok, org_id = setup_org(client, "detail@example.com")
+    key = mint_key(client, tok, org_id)
+    client.post(
+        "/ingest/sessions",
+        json={"sessions": [{"id": "sess:detail", "model": "gpt-4o", "requests": 4, "prompt_tokens": 40, "completion_tokens": 22, "cost": 0.5, "blocks": 1, "prevented": 0.2}]},
+        headers={"X-Turnstile-Ingest-Key": key},
+    )
+    sid = client.get(f"/organizations/{org_id}/sessions", headers=auth(tok)).json()[0]["id"]
+
+    r = client.get(f"/organizations/{org_id}/sessions/{sid}", headers=auth(tok))
+    assert r.status_code == 200
+    body = r.json()
+    assert body["session_key"] == "sess:detail" and body["requests"] == 4
+    assert body["first_seen_at"] and body["last_seen_at"]
+
+    # A non-member can't read it.
+    outsider = register(client, "detail-out@example.com")
+    assert client.get(f"/organizations/{org_id}/sessions/{sid}", headers=auth(outsider)).status_code == 403
+    # An unknown id is a 404, not a 500.
+    missing = "00000000-0000-0000-0000-000000000000"
+    assert client.get(f"/organizations/{org_id}/sessions/{missing}", headers=auth(tok)).status_code == 404
+
+
 def test_ingest_rejects_bad_key(client):
     r = client.post(
         "/ingest/sessions",

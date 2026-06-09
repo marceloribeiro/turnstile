@@ -87,6 +87,18 @@ def list_sessions(
     return list(db.execute(stmt).scalars())
 
 
+def get_session(
+    db: Session, org_id: uuid.UUID, session_id: uuid.UUID
+) -> TurnstileSession | None:
+    return db.execute(
+        select(TurnstileSession).where(
+            TurnstileSession.id == session_id,
+            TurnstileSession.organization_id == org_id,
+            TurnstileSession.deleted_at.is_(None),
+        )
+    ).scalar_one_or_none()
+
+
 def summary(db: Session, org_id: uuid.UUID, project_id: uuid.UUID | None = None) -> dict:
     stmt = select(
         func.count(TurnstileSession.id),
