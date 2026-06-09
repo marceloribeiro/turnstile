@@ -46,31 +46,13 @@ marketing math.
 
 ## Architecture
 
-```
-your app's LLM calls
-   │  (base-URL swap — no SDK, no code changes)
-   ▼
-┌──────────────────────────────────────────────────────────────┐
-│  Go data plane  (go/)                                          │
-│  proxy → session resolution → metering/pricing → enforcement   │
-│  meters every session, kills rogue loops/budgets in real time  │
-└──────────────────────────────────────────────────────────────┘
-   │  forwards request                    │  posts hashed aggregates
-   ▼                                      ▼  (ingest key; never raw prompts/keys)
-LLM provider                       ┌──────────────────────────────┐
-(OpenRouter, …)                    │  FastAPI control plane         │
-                                   │  (python/turnstile-api/)       │
-                                   │  auth · orgs · ingest · read   │
-                                   │  owns PostgreSQL               │
-                                   └──────────────────────────────┘
-                                                  │  REST + WebSocket (JWT)
-                                                  ▼
-                                   ┌──────────────────────────────┐
-                                   │  Next.js dashboard             │
-                                   │  (javascript/turnstile-web/)   │
-                                   │  live sessions · dollars saved │
-                                   └──────────────────────────────┘
-```
+![Turnstile architecture](docs/images/architecture.svg)
+
+Your app points its LLM base URL at the **Go data plane**, which meters and
+enforces in real time and forwards to the provider. It posts hashed aggregates
+(never raw prompts or keys) to the **FastAPI control plane**, which owns
+PostgreSQL and pushes live updates over Redis. The **Next.js dashboard** reads
+the control plane over REST + WebSocket.
 
 ## Repository layout
 
