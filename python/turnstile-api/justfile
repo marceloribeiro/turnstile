@@ -1,0 +1,59 @@
+# Turnstile API — builder-convention justfile.
+set dotenv-load := true
+
+venv := "venv/bin"
+dev_db := env_var_or_default("DB_NAME", "turnstile_api_dev")
+test_db := dev_db + "_test"
+
+# Install dependencies into the venv.
+install:
+    test -d venv || python3.13 -m venv venv
+    {{venv}}/pip install -q --upgrade pip
+    {{venv}}/pip install -q -r requirements.txt
+
+# Create both databases (development and test).
+db-create-all:
+    -createdb {{dev_db}}
+    -createdb {{test_db}}
+    @echo "created {{dev_db}} and {{test_db}}"
+
+# Drop both databases (force-disconnect first).
+db-drop-all:
+    -psql -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('{{dev_db}}','{{test_db}}') AND pid <> pg_backend_pid();"
+    -dropdb --if-exists {{dev_db}}
+    -dropdb --if-exists {{test_db}}
+
+# Migrate the dev database to head.
+#
+# The TEST database is intentionally NOT migrated here: the test suite builds its
+# schema from the models via create_all (tests/conftest.py). Having alembic AND
+# create_all both manage the same DB corrupts it (drop_all removes tables while
+# the alembic_version stamp remains). Migrations are validated against the dev DB.
+db-migrate-all:
+    {{venv}}/alembic upgrade head
+
+# New migration (autogenerate from models).
+db-revision name:
+    {{venv}}/alembic revision --autogenerate -m "{{name}}"
+
+# Open a psql shell on the dev DB.
+db:
+    psql -d {{dev_db}}
+
+# Run the app.
+up:
+    {{venv}}/uvicorn app.main:app --reload --port 8000
+
+# Run the test suite (against the test DB).
+test:
+    DB_NAME={{test_db}} {{venv}}/pytest -q
+
+# Tests only (alias) — extend with linters as they're added.
+check: test
+
+# Local Docker services (Redis) — see docker/docker-compose.yml.
+docker-up:
+    cd docker && docker compose up -d
+
+docker-down:
+    cd docker && docker compose down

@@ -1,0 +1,12 @@
+# Built binaries
+/turnstile
+/cmd/turnstile/turnstile
+/bin/
+*.test
+*.out
+
+# Local environment (copy from .env.example)
+.env
+
+# Spike measurement scratch (also covered by spike/.gitignore)
+spike/runs/

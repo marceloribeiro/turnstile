@@ -1,0 +1,92 @@
+name: API CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "python/turnstile-api/**"
+      - ".github/workflows/api.yml"
+  pull_request:
+    paths:
+      - "python/turnstile-api/**"
+      - ".github/workflows/api.yml"
+
+defaults:
+  run:
+    working-directory: python/turnstile-api
+
+env:
+  DB_USER: postgres
+  DB_PASS: postgres
+  DB_HOST: localhost
+  DB_PORT: "5432"
+  JWT_SECRET: ci-test-secret
+  CORS_ORIGINS: http://localhost:3000
+  REDIS_URL: redis://localhost:6379/0
+  POSTMARK_API_TOKEN: ""
+
+jobs:
+  lint-test:
+    name: lint, types & tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python/turnstile-api/requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Create databases
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -c "CREATE DATABASE turnstile_api_dev;"
+          psql -h localhost -U postgres -c "CREATE DATABASE turnstile_api_test;"
+
+      - name: Validate migrations (dev DB)
+        env:
+          DB_NAME: turnstile_api_dev
+        run: alembic upgrade head
+
+      - name: Ruff
+        run: ruff check .
+
+      - name: Mypy
+        run: mypy app
+
+      - name: Pytest
+        env:
+          DB_NAME: turnstile_api_test
+        run: pytest -q

@@ -1,0 +1,29 @@
+# Turnstile web — builder-convention justfile.
+set dotenv-load := true
+
+# Start the dev server.
+up:
+    npm run dev
+
+# Production build.
+build:
+    npm run build
+
+# Lint + typecheck (same as CI).
+check:
+    npm run lint
+    npx tsc --noEmit
+
+# Playwright E2E (servers must be running, or use the webServer config).
+test:
+    npx playwright test
+
+test-headed:
+    npx playwright test --headed
+
+test-ui:
+    npx playwright test --ui
+
+# Install dependencies.
+install:
+    npm install

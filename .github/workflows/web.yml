@@ -1,0 +1,41 @@
+name: Web CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "javascript/turnstile-web/**"
+      - ".github/workflows/web.yml"
+  pull_request:
+    paths:
+      - "javascript/turnstile-web/**"
+      - ".github/workflows/web.yml"
+
+defaults:
+  run:
+    working-directory: javascript/turnstile-web
+
+jobs:
+  lint-build:
+    name: lint, types & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: javascript/turnstile-web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build

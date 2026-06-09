@@ -1,0 +1,44 @@
+# ── Secrets / local env ────────────────────────────────────────────────
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
+
+# ── OS / editor ────────────────────────────────────────────────────────
+.DS_Store
+*.pem
+*.swp
+*~
+
+# ── Go (go/) ───────────────────────────────────────────────────────────
+go/turnstile
+go/cmd/turnstile/turnstile
+**/bin/
+*.test
+*.out
+go/spike/runs/
+
+# ── Python (python/turnstile-api/) ─────────────────────────────────────
+**/venv/
+**/__pycache__/
+*.pyc
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# ── Node / Next.js (javascript/turnstile-web/) ─────────────────────────
+**/node_modules/
+**/.next/
+**/out/
+**/build/
+**/coverage/
+*.tsbuildinfo
+next-env.d.ts
+**/test-results/
+**/playwright-report/
+**/playwright/.cache/
+.vercel
+npm-debug.log*

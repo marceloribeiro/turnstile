@@ -1,0 +1,7 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: turnstile-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]

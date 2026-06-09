@@ -1,0 +1,36 @@
+# Turnstile Go data plane — builder-convention justfile.
+# Loads .env so `just up` runs with your local config.
+set dotenv-load := true
+
+# Build everything (verifies the module; stdlib-only, no downloads needed).
+install:
+    go build ./...
+
+# Run the data plane on PORT (default 8080); the control plane binds to PORT+1.
+# Pass a port to run several instances side by side — one per project/key
+# (space ports by 2 so control planes don't collide):
+#   TURNSTILE_INGEST_KEY=gr_projectA just up 8080
+#   TURNSTILE_INGEST_KEY=gr_projectB just up 8082
+up port="8080":
+    TURNSTILE_LISTEN=":{{port}}" TURNSTILE_CONTROL_LISTEN="127.0.0.1:$(( {{port}} + 1 ))" go run ./cmd/turnstile
+
+# Build a release binary into bin/.
+build:
+    go build -o bin/turnstile ./cmd/turnstile
+
+# Run all tests (includes the proxy latency gate).
+test:
+    go test ./...
+
+# Vet + format check (CI gate).
+check:
+    go vet ./...
+    gofmt -l .
+
+# Auto-format.
+fmt:
+    gofmt -w .
+
+# Generate a random secret — use for TURNSTILE_SALT and TURNSTILE_CONTROL_TOKEN.
+salt:
+    @openssl rand -hex 32
