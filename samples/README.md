@@ -1,20 +1,28 @@
 # Samples — talk to an LLM through Turnstile
 
-Three tiny interactive CLIs, one per provider. Each uses the provider's **official
-SDK with only the base URL swapped to Turnstile** — the whole point of Turnstile:
-no SDK change, no code change, just a different base URL. You type a question and
+Four tiny interactive CLIs, one per provider. Each uses the provider's **official
+SDK pointed at Turnstile instead of the provider** — the whole point of Turnstile:
+no SDK change, no code change, just a different endpoint. You type a question and
 the answer streams back, having passed through the Turnstile data plane (which
 meters it, enforces budgets/loops, and forwards to the provider).
 
-| Sample | SDK | Turnstile base URL | Routes to |
+| Sample | Client SDK | Turnstile endpoint | Routes to |
 | --- | --- | --- | --- |
-| [`openrouter-sample`](openrouter-sample) | `openai` (OpenRouter is OpenAI-compatible) | `http://localhost:8080/api/v1` | OpenRouter (fallback adapter) |
+| [`openrouter-sample`](openrouter-sample) | `openai` | `http://localhost:8080/api/v1` | OpenRouter (fallback adapter) |
 | [`openai-sample`](openai-sample) | `openai` | `http://localhost:8080/v1` | OpenAI adapter |
 | [`anthropic-sample`](anthropic-sample) | `anthropic` | `http://localhost:8080` | Anthropic adapter |
+| [`gemini-sample`](gemini-sample) | `google-genai` | `http://localhost:8080` (via `http_options`) | Gemini adapter |
 
-The base URL is the only thing that differs from a normal integration. Turnstile
+The **Client SDK** is the *wire protocol*, not the model vendor. OpenRouter is an
+**OpenAI-compatible** gateway, so its sample uses the OpenAI SDK — but you pick the
+actual model via `MODEL`, which can be *any* vendor (`anthropic/claude-3.5-sonnet`,
+`google/gemini-flash-1.5`, …). So "Claude via OpenRouter" and "Claude direct" are
+both possible — they just route through different adapters.
+
+The endpoint is the only thing that differs from a normal integration. Turnstile
 routes by request shape: `/api/v1/*` → OpenRouter, `/v1/chat/completions` &
-`/v1/responses` → OpenAI, `/v1/messages` → Anthropic.
+`/v1/responses` → OpenAI, `/v1/messages` → Anthropic,
+`/v1beta/models/...:generateContent` → Gemini.
 
 ## Prerequisites
 
