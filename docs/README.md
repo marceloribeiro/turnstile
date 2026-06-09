@@ -1,9 +1,12 @@
 # Turnstile — Documentation
 
-**The session layer for the autonomous AI era.** Turnstile is a local proxy that
-sits between your app and any LLM provider, watches every AI session in real
+Turnstile is a local proxy that sits between your app and any OpenAI-compatible
+endpoint (direct provider adapters landing), watches every AI session in real
 time, and trips a circuit breaker the instant *one* session goes rogue — a
 runaway agent loop or a blown budget — without taking down the rest of your app.
+
+> **Status:** working end-to-end via OpenRouter today; direct OpenAI and
+> Anthropic adapters in progress. See [ROADMAP.md](ROADMAP.md).
 
 This directory holds cross-cutting documentation. Each service also ships its own
 deeper docs.
