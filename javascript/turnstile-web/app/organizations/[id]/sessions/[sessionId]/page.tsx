@@ -5,9 +5,10 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
-import { CenterSpinner, ErrorText, GlassCard, Stat, usd, when } from "@/components/ui";
+import { CenterSpinner, ErrorText, GlassCard, LiveBadge, Stat, usd, when } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { useTelemetrySocket } from "@/lib/use-telemetry-socket";
 import type { SessionRow } from "@/lib/types";
 
 function Row({ label, value }: { label: string; value: ReactNode }) {
@@ -42,6 +43,9 @@ export default function SessionDetailPage() {
     })();
   }, [load]);
 
+  // Live updates: refetch this session whenever the org ingests telemetry.
+  const live = useTelemetrySocket(orgId, token, load);
+
   if (err) {
     return (
       <div className="flex flex-col gap-4">
@@ -62,7 +66,10 @@ export default function SessionDetailPage() {
         <Link href={`/organizations/${orgId}`} className="muted text-sm hover:text-white">
           ← Overview
         </Link>
-        <h2 className="mt-1 break-all font-mono text-xl font-semibold tracking-tight">{s.session_key}</h2>
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <h2 className="break-all font-mono text-xl font-semibold tracking-tight">{s.session_key}</h2>
+          <LiveBadge live={live} />
+        </div>
         <p className="muted mt-1 text-sm">
           Per-session totals across {s.requests} request{s.requests === 1 ? "" : "s"}. Turnstile stores
           aggregates, not individual requests.
