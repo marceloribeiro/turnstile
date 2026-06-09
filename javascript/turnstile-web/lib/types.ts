@@ -66,6 +66,7 @@ export type SessionRow = {
   cost: number;
   blocks: number;
   prevented: number;
+  first_seen_at: string;
   last_seen_at: string;
 };
 

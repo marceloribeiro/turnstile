@@ -42,6 +42,20 @@ def list_sessions(
     ]
 
 
+@router.get("/sessions/{session_id}", response_model=SessionOut)
+def get_session(
+    org_id: uuid.UUID,
+    session_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    _require_org(db, org_id, user)
+    s = telemetry_service.get_session(db, org_id, session_id)
+    if s is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="session not found")
+    return SessionOut.model_validate(s)
+
+
 @router.get("/summary", response_model=SummaryOut)
 def org_summary(
     org_id: uuid.UUID,

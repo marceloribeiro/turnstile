@@ -128,3 +128,7 @@ export function usd(n: number): string {
   if (n < 0.01) return "$" + n.toFixed(6);
   return "$" + n.toFixed(2);
 }
+
+export function when(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}

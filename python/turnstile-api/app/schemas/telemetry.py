@@ -68,6 +68,7 @@ class SessionOut(BaseModel):
     cost: float
     blocks: int
     prevented: float
+    first_seen_at: datetime
     last_seen_at: datetime
 
 

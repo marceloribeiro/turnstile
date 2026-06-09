@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { CopyButton } from "@/components/copy-button";
@@ -15,6 +15,7 @@ import {
   SectionHeader,
   Stat,
   usd,
+  when,
 } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -29,6 +30,7 @@ function envSnippet(key: string): string {
 
 export default function ProjectPage() {
   const { token } = useAuth();
+  const router = useRouter();
   const params = useParams<{ id: string; projectId: string }>();
   const orgId = params.id;
   const projectId = params.projectId;
@@ -116,12 +118,17 @@ export default function ProjectPage() {
                     <th className="pb-2 text-right font-semibold">Reqs</th>
                     <th className="pb-2 text-right font-semibold">Cost</th>
                     <th className="pb-2 text-right font-semibold">Blocks</th>
+                    <th className="pb-2 text-right font-semibold">Last request</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sessions.map((s) => (
-                    <tr key={s.id} className="border-t border-white/10">
-                      <td className="py-2 pr-2 font-mono text-xs">{s.session_key}</td>
+                    <tr
+                      key={s.id}
+                      onClick={() => router.push(`/organizations/${orgId}/sessions/${s.id}`)}
+                      className="cursor-pointer border-t border-white/10 transition hover:bg-white/[0.03]"
+                    >
+                      <td className="py-2 pr-2 font-mono text-xs text-[var(--accent)]">{s.session_key}</td>
                       <td className="muted py-2 text-xs">{s.model ?? "—"}</td>
                       <td className="py-2 text-right">{s.requests}</td>
                       <td className="py-2 text-right">{usd(s.cost)}</td>
@@ -131,6 +138,9 @@ export default function ProjectPage() {
                         ) : (
                           <span className="muted">0</span>
                         )}
+                      </td>
+                      <td className="muted py-2 whitespace-nowrap text-right text-xs">
+                        {when(s.last_seen_at)}
                       </td>
                     </tr>
                   ))}

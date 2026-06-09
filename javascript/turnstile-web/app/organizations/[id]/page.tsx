@@ -1,9 +1,9 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import { CenterSpinner, GlassCard, LiveBadge, Stat, usd } from "@/components/ui";
+import { CenterSpinner, GlassCard, LiveBadge, Stat, usd, when } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useTelemetrySocket } from "@/lib/use-telemetry-socket";
@@ -11,6 +11,7 @@ import type { Project, SessionRow, Summary } from "@/lib/types";
 
 export default function OverviewPage() {
   const { token } = useAuth();
+  const router = useRouter();
   const orgId = useParams<{ id: string }>().id;
   const [summary, setSummary] = useState<Summary | null>(null);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
@@ -100,12 +101,17 @@ export default function OverviewPage() {
                   <th className="pb-2 text-right font-semibold">Reqs</th>
                   <th className="pb-2 text-right font-semibold">Cost</th>
                   <th className="pb-2 text-right font-semibold">Blocks</th>
+                  <th className="pb-2 text-right font-semibold">Last request</th>
                 </tr>
               </thead>
               <tbody>
                 {sessions.map((s) => (
-                  <tr key={s.id} className="border-t border-white/10">
-                    <td className="py-2 pr-2 font-mono text-xs">{s.session_key}</td>
+                  <tr
+                    key={s.id}
+                    onClick={() => router.push(`/organizations/${orgId}/sessions/${s.id}`)}
+                    className="cursor-pointer border-t border-white/10 transition hover:bg-white/[0.03]"
+                  >
+                    <td className="py-2 pr-2 font-mono text-xs text-[var(--accent)]">{s.session_key}</td>
                     <td className="py-2">
                       <span className="chip">{s.source}</span>
                     </td>
@@ -118,6 +124,9 @@ export default function OverviewPage() {
                       ) : (
                         <span className="muted">0</span>
                       )}
+                    </td>
+                    <td className="muted py-2 whitespace-nowrap text-right text-xs">
+                      {when(s.last_seen_at)}
                     </td>
                   </tr>
                 ))}
