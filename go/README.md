@@ -29,7 +29,8 @@ Two listeners come up: the **data plane** (`:8080`, the proxy) and the **control
 | Var | Default | Purpose |
 |-----|---------|---------|
 | `TURNSTILE_LISTEN` | `:8080` | Data-plane (proxy) listen address |
-| `TURNSTILE_UPSTREAM` | `https://openrouter.ai` | Default provider upstream (OpenRouter adapter) |
+| `TURNSTILE_UPSTREAM` | `https://openrouter.ai` | Fallback provider upstream (OpenRouter adapter; handles `/api/v1/` and unmatched traffic) |
+| `TURNSTILE_OPENAI_BASE` | `https://api.openai.com` | Direct OpenAI adapter upstream (claims the `/v1/` surface: `/v1/chat/completions` + `/v1/responses`) |
 | `TURNSTILE_FAIL_CLOSED` | `false` | Invert fail-open (block on internal error) |
 | `TURNSTILE_SALT` | random | HMAC salt for key fingerprints + session hashes |
 | `TURNSTILE_SESSION_BUDGET_USD` | `0` (off) | Per-session spend ceiling |
@@ -47,7 +48,9 @@ cmd/turnstile/         entrypoint — wires everything, two listeners, graceful 
 internal/
   config/              env-driven config
   proxy/               the transparent streaming proxy (the hot path)
-  adapter/             ProviderAdapter interface + Registry; openrouter/ is the first impl
+  adapter/             ProviderAdapter interface + Registry
+    openrouter/        fallback adapter (/api/v1/, in-stream cost)
+    openai/            direct OpenAI adapter (/v1/ — Chat Completions + Responses API)
   session/             session resolution (header → anchor-hash → unattributed)
   pricing/             cost engine (provider-reported → override → table)
   meter/               per-session spend accumulation (in-memory Store)
