@@ -183,11 +183,16 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					t3 = time.Now()
 				}
 				// Then, only on candidate frames, extract usage from the data: frame.
+				// Merge non-zero fields rather than overwrite: some providers split
+				// usage across frames (Anthropic reports input_tokens in message_start
+				// and output_tokens in message_delta). Single-frame providers are
+				// unaffected — the merge from a zero value is just that frame.
 				if meterOn && bytes.Contains(line, usageMarker) {
 					if t := bytes.TrimSpace(line); bytes.HasPrefix(t, sseDataPrefix) {
 						payload := bytes.TrimSpace(t[len(sseDataPrefix):])
 						if u, ok := a.ParseUsage(payload); ok {
-							usage, usageFound = u, true
+							usage = mergeUsage(usage, u)
+							usageFound = true
 						}
 					}
 				}
@@ -354,6 +359,26 @@ func (l *limitedWriter) Write(p []byte) (int, error) {
 		l.n -= take
 	}
 	return len(p), nil
+}
+
+// mergeUsage folds a freshly parsed frame's usage into the accumulator, taking
+// each non-zero field. This lets providers that split usage across SSE frames
+// (e.g. Anthropic) accumulate correctly; for single-frame providers it's
+// equivalent to taking that one frame.
+func mergeUsage(acc, u adapter.Usage) adapter.Usage {
+	if u.PromptTokens > 0 {
+		acc.PromptTokens = u.PromptTokens
+	}
+	if u.CompletionTokens > 0 {
+		acc.CompletionTokens = u.CompletionTokens
+	}
+	if u.HasReportedCost {
+		acc.ReportedCost, acc.HasReportedCost = u.ReportedCost, true
+	}
+	if u.ResponseID != "" {
+		acc.ResponseID = u.ResponseID
+	}
+	return acc
 }
 
 func isEventStream(contentType string) bool {

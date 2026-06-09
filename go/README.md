@@ -31,6 +31,7 @@ Two listeners come up: the **data plane** (`:8080`, the proxy) and the **control
 | `TURNSTILE_LISTEN` | `:8080` | Data-plane (proxy) listen address |
 | `TURNSTILE_UPSTREAM` | `https://openrouter.ai` | Fallback provider upstream (OpenRouter adapter; handles `/api/v1/` and unmatched traffic) |
 | `TURNSTILE_OPENAI_BASE` | `https://api.openai.com` | Direct OpenAI adapter upstream (claims the `/v1/` surface: `/v1/chat/completions` + `/v1/responses`) |
+| `TURNSTILE_ANTHROPIC_BASE` | `https://api.anthropic.com` | Direct Anthropic adapter upstream (the Messages API, `/v1/messages`; matched ahead of OpenAI) |
 | `TURNSTILE_FAIL_CLOSED` | `false` | Invert fail-open (block on internal error) |
 | `TURNSTILE_SALT` | random | HMAC salt for key fingerprints + session hashes |
 | `TURNSTILE_SESSION_BUDGET_USD` | `0` (off) | Per-session spend ceiling |
@@ -51,6 +52,7 @@ internal/
   adapter/             ProviderAdapter interface + Registry
     openrouter/        fallback adapter (/api/v1/, in-stream cost)
     openai/            direct OpenAI adapter (/v1/ — Chat Completions + Responses API)
+    anthropic/         direct Anthropic adapter (/v1/messages — Messages API)
   session/             session resolution (header → anchor-hash → unattributed)
   pricing/             cost engine (provider-reported → override → table)
   meter/               per-session spend accumulation (in-memory Store)

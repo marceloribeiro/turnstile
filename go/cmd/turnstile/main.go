@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"turnstile/internal/adapter"
+	"turnstile/internal/adapter/anthropic"
 	"turnstile/internal/adapter/openai"
 	"turnstile/internal/adapter/openrouter"
 	"turnstile/internal/config"
@@ -37,11 +38,14 @@ func main() {
 	cfg := config.Load()
 
 	rec := metrics.NewRecorder(10000)
-	// OpenRouter is the fallback (handles /api/v1/ and anything unmatched). The
-	// OpenAI adapter is registered ahead of it and claims the /v1/ surface
-	// (chat/completions + responses). Anthropic will slot in here next.
+	// OpenRouter is the fallback (handles /api/v1/ and anything unmatched).
+	// Match-first adapters are tried in order: Anthropic first (it claims
+	// /v1/messages + anthropic-version/x-api-key), then OpenAI (which broadly
+	// claims the rest of /v1/). Order matters — OpenAI's /v1/ prefix would
+	// otherwise swallow /v1/messages.
 	reg := adapter.NewRegistry(
 		openrouter.New(cfg.UpstreamBase),
+		anthropic.New(cfg.AnthropicBase),
 		openai.New(cfg.OpenAIBase),
 	)
 
