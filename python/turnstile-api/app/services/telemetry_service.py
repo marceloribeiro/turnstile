@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from ..models.deployment import Deployment
+from ..models.organization_member import OrganizationMember
 from ..models.turnstile_session import TurnstileSession
 from ..schemas.telemetry import IngestSession
 
@@ -106,4 +107,61 @@ def summary(db: Session, org_id: uuid.UUID, project_id: uuid.UUID | None = None)
         "total_cost": float(row[2]),
         "blocks": int(row[3]),
         "dollars_prevented": float(row[4]),
+    }
+
+
+def usage_for_user(db: Session, user_id: uuid.UUID) -> dict:
+    """Cross-org usage for one user, scoped to the orgs they belong to and broken
+    down by model (highest spend first)."""
+    member_orgs = (
+        select(OrganizationMember.organization_id)
+        .where(
+            OrganizationMember.user_id == user_id,
+            OrganizationMember.deleted_at.is_(None),
+        )
+        .scalar_subquery()
+    )
+    scope = (
+        TurnstileSession.organization_id.in_(member_orgs),
+        TurnstileSession.deleted_at.is_(None),
+    )
+
+    totals = db.execute(
+        select(
+            func.count(TurnstileSession.id),
+            func.coalesce(func.sum(TurnstileSession.requests), 0),
+            func.coalesce(func.sum(TurnstileSession.cost), 0.0),
+            func.coalesce(func.sum(TurnstileSession.prevented), 0.0),
+        ).where(*scope)
+    ).one()
+
+    model = func.coalesce(TurnstileSession.model, "unknown")
+    rows = db.execute(
+        select(
+            model.label("model"),
+            func.coalesce(func.sum(TurnstileSession.cost), 0.0),
+            func.coalesce(func.sum(TurnstileSession.requests), 0),
+            func.coalesce(func.sum(TurnstileSession.prompt_tokens), 0),
+            func.coalesce(func.sum(TurnstileSession.completion_tokens), 0),
+        )
+        .where(*scope)
+        .group_by(model)
+        .order_by(func.sum(TurnstileSession.cost).desc())
+    ).all()
+
+    return {
+        "sessions": int(totals[0]),
+        "requests": int(totals[1]),
+        "total_cost": float(totals[2]),
+        "dollars_prevented": float(totals[3]),
+        "by_model": [
+            {
+                "model": r[0],
+                "cost": float(r[1]),
+                "requests": int(r[2]),
+                "prompt_tokens": int(r[3]),
+                "completion_tokens": int(r[4]),
+            }
+            for r in rows
+        ],
     }

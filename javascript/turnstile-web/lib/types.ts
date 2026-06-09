@@ -76,3 +76,19 @@ export type Summary = {
   blocks: number;
   dollars_prevented: number;
 };
+
+export type ModelUsage = {
+  model: string;
+  cost: number;
+  requests: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+};
+
+export type Usage = {
+  sessions: number;
+  requests: number;
+  total_cost: number;
+  dollars_prevented: number;
+  by_model: ModelUsage[];
+};

@@ -77,3 +77,21 @@ class SummaryOut(BaseModel):
     total_cost: float
     blocks: int
     dollars_prevented: float
+
+
+class ModelUsage(BaseModel):
+    model: str
+    cost: float
+    requests: int
+    prompt_tokens: int
+    completion_tokens: int
+
+
+class UsageOut(BaseModel):
+    """Cross-organization usage for the current user, broken down by model."""
+
+    sessions: int
+    requests: int
+    total_cost: float
+    dollars_prevented: float
+    by_model: list[ModelUsage]

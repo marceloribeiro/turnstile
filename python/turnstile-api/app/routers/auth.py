@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 
 from ..deps import get_current_user, get_db
 from ..models.user import User
+from ..schemas.telemetry import UsageOut
 from ..schemas.user import AuthResponse, UserCreate, UserLogin, UserOut
 from ..security import create_access_token
-from ..services import user_service
+from ..services import telemetry_service, user_service
 
 router = APIRouter(tags=["auth"])
 
@@ -27,3 +28,12 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
     return UserOut.model_validate(current_user)
+
+
+@router.get("/me/usage", response_model=UsageOut)
+def my_usage(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Cross-org spend for the current user, broken down by model."""
+    return UsageOut(**telemetry_service.usage_for_user(db, current_user.id))

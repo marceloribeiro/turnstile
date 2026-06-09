@@ -178,6 +178,49 @@ def test_member_cannot_list_invitations(client):
     assert r.status_code == 403
 
 
+def test_me_usage_aggregates_by_model(client):
+    tok, org_id = setup_org(client, "usage@example.com")
+    key = mint_key(client, tok, org_id)
+    client.post(
+        "/ingest/sessions",
+        json={
+            "sessions": [
+                {"id": "a", "model": "openai/gpt-4o", "requests": 2, "prompt_tokens": 100, "completion_tokens": 50, "cost": 0.50, "prevented": 0.10},
+                {"id": "b", "model": "openai/gpt-4o", "requests": 1, "prompt_tokens": 20, "completion_tokens": 10, "cost": 0.25},
+                {"id": "c", "model": "anthropic/claude-3-5-sonnet", "requests": 3, "prompt_tokens": 200, "completion_tokens": 80, "cost": 1.00, "prevented": 0.40},
+            ]
+        },
+        headers={"X-Turnstile-Ingest-Key": key},
+    )
+
+    usage = client.get("/me/usage", headers=auth(tok)).json()
+    assert usage["sessions"] == 3
+    assert usage["requests"] == 6
+    assert round(usage["total_cost"], 4) == 1.75
+    assert round(usage["dollars_prevented"], 4) == 0.50
+    # by_model is ordered by spend desc: claude ($1.00) before gpt-4o ($0.75).
+    assert [m["model"] for m in usage["by_model"]] == [
+        "anthropic/claude-3-5-sonnet",
+        "openai/gpt-4o",
+    ]
+    gpt = next(m for m in usage["by_model"] if m["model"] == "openai/gpt-4o")
+    assert round(gpt["cost"], 4) == 0.75 and gpt["requests"] == 3 and gpt["prompt_tokens"] == 120
+
+
+def test_me_usage_scoped_to_membership(client):
+    # Another org's telemetry must never appear in my cross-org usage.
+    tok_a, org_a = setup_org(client, "ua@example.com")
+    key_a = mint_key(client, tok_a, org_a)
+    client.post(
+        "/ingest/sessions",
+        json={"sessions": [{"id": "x", "model": "m", "cost": 5.0}]},
+        headers={"X-Turnstile-Ingest-Key": key_a},
+    )
+    tok_b = register(client, "ub@example.com")
+    usage_b = client.get("/me/usage", headers=auth(tok_b)).json()
+    assert usage_b["sessions"] == 0 and usage_b["total_cost"] == 0.0 and usage_b["by_model"] == []
+
+
 def test_ingest_requires_key_header(client):
     # Missing the ingest-key header entirely is a 422 (required header), not a 500.
     r = client.post("/ingest/sessions", json={"sessions": []})

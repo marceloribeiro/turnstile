@@ -34,6 +34,16 @@ marketing math.
 - **Fail-open.** A fault in Turnstile forwards the request rather than breaking your app (configurable to fail-closed).
 - **Private.** Raw prompts and API keys are never persisted — only salted hashes and numeric aggregates ever leave the data plane.
 
+## Screenshots
+
+**Dashboard** — spend across all your organizations, broken down by model, with totals and dollars prevented up top.
+
+![Turnstile dashboard](docs/images/dashboard.png)
+
+**Organization overview** — a live per-org view led by the dollars-prevented hero, with a per-session breakdown (model, cost, blocks).
+
+![Turnstile organization overview](docs/images/org-overview.png)
+
 ## Architecture
 
 ```
