@@ -21,6 +21,9 @@ type Config struct {
 	// AnthropicBase is the upstream for the direct Anthropic adapter (the Messages
 	// API, /v1/messages).
 	AnthropicBase string
+	// GeminiBase is the upstream for the direct Gemini adapter (the Generative
+	// Language API, /v1beta/models/{model}:generateContent).
+	GeminiBase string
 	// FailClosed inverts the default fail-open behaviour (Q3). When false (the
 	// default), an internal Turnstile fault must never break the customer's call.
 	FailClosed bool
@@ -66,6 +69,7 @@ func Load() Config {
 		UpstreamBase:    env("TURNSTILE_UPSTREAM", "https://openrouter.ai"),
 		OpenAIBase:      env("TURNSTILE_OPENAI_BASE", "https://api.openai.com"),
 		AnthropicBase:   env("TURNSTILE_ANTHROPIC_BASE", "https://api.anthropic.com"),
+		GeminiBase:      env("TURNSTILE_GEMINI_BASE", "https://generativelanguage.googleapis.com"),
 		FailClosed:      envBool("TURNSTILE_FAIL_CLOSED", false),
 		ShutdownTimeout: envDur("TURNSTILE_SHUTDOWN_TIMEOUT", 25*time.Second),
 		Salt:            env("TURNSTILE_SALT", ""),

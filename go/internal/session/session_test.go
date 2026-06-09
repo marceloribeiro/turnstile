@@ -144,6 +144,27 @@ func TestUnknownPreviousResponseIDFallsBack(t *testing.T) {
 	}
 }
 
+func TestKeyFingerprintCoversNonBearerAuth(t *testing.T) {
+	r := NewResolver([]byte("salt"))
+	meta := adapter.RequestMeta{Anchor: "sys\x00identical opening"}
+	// Each provider's auth style must produce a non-empty fingerprint and
+	// de-collide an identical anchor: Bearer (OpenAI), x-api-key (Anthropic),
+	// x-goog-api-key (Gemini).
+	bearer := r.Resolve(hdr("Authorization", "Bearer key-1"), meta)
+	xapi := r.Resolve(hdr("X-Api-Key", "key-2"), meta)
+	xgoog := r.Resolve(hdr("X-Goog-Api-Key", "key-3"), meta)
+
+	for _, id := range []Identity{bearer, xapi, xgoog} {
+		if id.KeyFP == "" {
+			t.Fatalf("key fingerprint must be non-empty across auth styles")
+		}
+	}
+	ids := map[string]bool{bearer.ID: true, xapi.ID: true, xgoog.ID: true}
+	if len(ids) != 3 {
+		t.Errorf("distinct keys must de-collide identical anchors, got ids %v", ids)
+	}
+}
+
 func TestSanitizeBoundsAndStrips(t *testing.T) {
 	r := NewResolver([]byte("salt"))
 	id := r.Resolve(hdr("X-Turnstile-Session", "ab\x00\x07cd"), adapter.RequestMeta{})
