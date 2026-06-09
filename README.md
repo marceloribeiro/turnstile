@@ -80,6 +80,10 @@ Today the data plane needs an ingest key minted in the web app, so the order is
 > auto-mints a dev ingest key, collapsing the steps above into one command
 > (tracked in the [roadmap](docs/ROADMAP.md)).
 
+Want to just see traffic flow through? The [`samples/`](samples) folder has tiny
+interactive CLIs for OpenRouter, OpenAI, and Anthropic — point one at a running
+data plane and stream answers from your terminal (`just install && just console`).
+
 ## How it works
 
 1. Your app's LLM calls hit the **Go data plane** instead of the provider directly (base-URL swap).
