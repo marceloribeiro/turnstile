@@ -1,0 +1,15 @@
+# Anthropic sample — talk to Anthropic through Turnstile.
+venv := "venv/bin"
+
+default:
+    @just --list
+
+# Install the Anthropic SDK into a local venv (one-time).
+install:
+    test -d venv || python3 -m venv venv
+    {{venv}}/pip install -q --upgrade pip
+    {{venv}}/pip install -q -r requirements.txt
+
+# Start the interactive REPL (Turnstile must be running on :8080).
+console:
+    {{venv}}/python chat.py
