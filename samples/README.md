@@ -25,8 +25,7 @@ routes by request shape: `/api/v1/*` → OpenRouter, `/v1/chat/completions` &
    Tip: run it with `TURNSTILE_DEBUG=true just up` to see one log line per request
    (adapter chosen, session, tokens parsed) as your questions go through.
    > The OpenAI and Anthropic adapters must be present in the running binary.
-   > OpenAI is on `main`; Anthropic lands when its PR merges (until then, build the
-   > data plane from the branch that has it).
+   > The OpenRouter, OpenAI, and Anthropic adapters are all on `main`.
 2. **A provider API key** for whichever sample you run (your own key — Turnstile
    passes it straight through and never stores it).
 3. **Python 3.9+** and [`just`](https://github.com/casey/just).
@@ -52,9 +51,25 @@ assistant> A turnstile is a gate that lets one person through at a time…
 you>
 ```
 
-Each sample sends an `X-Turnstile-Session` header so its conversation shows up as
-a single session in the control plane / dashboard. Watch it live:
+Each sample sends an `X-Turnstile-Session` header so its conversation groups into
+a single session. It's metered **in-memory** the moment it runs — no setup, no
+ingest key — and visible on the control plane:
 
 ```sh
-curl http://localhost:8081/v1/sessions   # or open the web dashboard
+curl http://localhost:8081/v1/sessions   # your session, tokens, cost
 ```
+
+### Seeing it in the web dashboard
+
+That's a separate, optional step. The samples do **not** use a Turnstile ingest
+key — the key lives in the **data plane's** config (`go/.env`) and is what ships
+your session to the platform so it appears in the dashboard:
+
+1. In the web app: sign in → open an organization → create a project → create a
+   deployment → copy its ingest key (`ts_...`).
+2. In `go/.env` set `TURNSTILE_INGEST_URL=http://localhost:8000/ingest/sessions`
+   and `TURNSTILE_INGEST_KEY=ts_...`, then restart the data plane (`just up`).
+3. View **that** organization — your session appears within one ingest interval.
+
+Without this, everything still works and meters; it just isn't shipped off-box
+(it stays on `:8081`). Each sample's `.env.example` repeats these steps.
