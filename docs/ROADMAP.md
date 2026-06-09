@@ -32,6 +32,10 @@ instance serves all providers and routes by request shape.
 
 ### Packaging & deployment
 - Docker image for the data plane and published install/runbook docs.
+- **One-command local stack.** A `docker compose up` that boots Postgres, Redis,
+  the API, the web app, and the data plane, and auto-mints a dev ingest key and
+  wires it into the data plane — collapsing the current multi-step setup
+  (API → web → mint key → Go) into a single command for trials.
 
 ### Dashboard
 - A manual **kill-switch** control in the UI. The control plane and API already

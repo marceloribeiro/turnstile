@@ -1,22 +1,31 @@
 # Turnstile
 
-**The session layer for the autonomous AI era.**
+**Turnstile kills the one rogue LLM session — a runaway agent loop or a blown budget — in real time, without taking down the rest of your app.**
 
 [![Go CI](https://github.com/marceloribeiro/turnstile/actions/workflows/go.yml/badge.svg)](https://github.com/marceloribeiro/turnstile/actions/workflows/go.yml)
 [![API CI](https://github.com/marceloribeiro/turnstile/actions/workflows/api.yml/badge.svg)](https://github.com/marceloribeiro/turnstile/actions/workflows/api.yml)
 [![Web CI](https://github.com/marceloribeiro/turnstile/actions/workflows/web.yml/badge.svg)](https://github.com/marceloribeiro/turnstile/actions/workflows/web.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Turnstile is a transparent proxy that sits between your application and any LLM
-provider. It meters every AI session in real time and trips a circuit breaker
-the instant *one* session goes rogue — a runaway agent loop or a blown budget —
-**without taking down the rest of your app**. Point your LLM client's base URL at
-Turnstile and the rest is automatic: no SDK, no code changes.
+> **Status:** working end-to-end via OpenRouter today; direct OpenAI and Anthropic adapters in progress. See the [roadmap](docs/ROADMAP.md).
+
+Turnstile is a transparent proxy that sits between your application and any
+**OpenAI-compatible endpoint** (with direct provider adapters landing). It meters
+every AI session in real time and trips a circuit breaker the instant *one*
+session goes rogue — a runaway agent loop or a blown budget — **without taking
+down the rest of your app**. Point your LLM client's base URL at Turnstile and
+the rest is automatic: no SDK, no code changes.
 
 Teams running AI agents in production face two problems Turnstile is built for:
 costs that spike with no warning, and no way to stop a single misbehaving session
 without pulling the plug on everything. Turnstile answers both, and surfaces a
-single hero metric — **dollars prevented** — so you can see the damage it stopped.
+single hero metric — **dollars prevented**: the estimated spend it blocked when a
+session crossed its budget ceiling or tripped loop detection (priced from the
+session's recent cost-per-call), so the number reflects real averted spend, not
+marketing math.
+
+> *The longer-term vision: the session layer for the autonomous AI era — the
+> place where every agent's spend and behavior is observed and governed.*
 
 - **Drop-in.** Swap one base URL. Keep your provider API key (it's passed through, never stored).
 - **Session-precise.** Kills the one rogue trajectory, not the global API key.
@@ -66,16 +75,18 @@ This is a monorepo of three independent services plus shared docs.
 
 ## Quick start
 
-Bring up the full stack (your app → Turnstile → provider → metrics in the
-dashboard) with the end-to-end guide:
+Full end-to-end setup (your app → Turnstile → provider → metrics in the
+dashboard) is in the guide:
 
 ➡️ **[docs/RUNNING_LOCALLY.md](docs/RUNNING_LOCALLY.md)**
 
-Order matters — the data plane needs an ingest key minted in the web app, so
-start the **API → web → mint key → Go data plane**, then point your app at
-`http://localhost:8080`.
+Today the data plane needs an ingest key minted in the web app, so the order is
+**API → web → mint key → Go data plane**, then point your app's base URL at
+`http://localhost:8080`. Each service also runs and tests standalone — see its README.
 
-Each service can also be run and tested on its own; see its README.
+> **Coming soon:** a single `docker compose up` that boots the whole stack and
+> auto-mints a dev ingest key, collapsing the steps above into one command
+> (tracked in the [roadmap](docs/ROADMAP.md)).
 
 ## How it works
 
