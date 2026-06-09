@@ -15,6 +15,9 @@ type Config struct {
 	// UpstreamBase is the default provider base URL the proxy forwards to
 	// (OpenRouter), used by the fallback adapter when no other adapter matches.
 	UpstreamBase string
+	// OpenAIBase is the upstream for the direct OpenAI adapter (matches /v1/ paths,
+	// e.g. /v1/chat/completions and /v1/responses).
+	OpenAIBase string
 	// FailClosed inverts the default fail-open behaviour (Q3). When false (the
 	// default), an internal Turnstile fault must never break the customer's call.
 	FailClosed bool
@@ -58,6 +61,7 @@ func Load() Config {
 	return Config{
 		ListenAddr:      env("TURNSTILE_LISTEN", ":8080"),
 		UpstreamBase:    env("TURNSTILE_UPSTREAM", "https://openrouter.ai"),
+		OpenAIBase:      env("TURNSTILE_OPENAI_BASE", "https://api.openai.com"),
 		FailClosed:      envBool("TURNSTILE_FAIL_CLOSED", false),
 		ShutdownTimeout: envDur("TURNSTILE_SHUTDOWN_TIMEOUT", 25*time.Second),
 		Salt:            env("TURNSTILE_SALT", ""),

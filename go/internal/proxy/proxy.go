@@ -230,6 +230,13 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	end := time.Now()
 
+	// Link this response to its session so a follow-up OpenAI Responses-API turn
+	// that references it (previous_response_id) resolves to the same trajectory.
+	// After the response is fully forwarded, so it never touches the latency gate.
+	if usageFound && p.resolver != nil && usage.ResponseID != "" {
+		p.resolver.LinkResponse(usage.ResponseID, ident.ID)
+	}
+
 	if p.Debug {
 		log.Printf("[debug] %s %s -> %d | adapter=%s session=%s(%s) model=%q ce=%q usage=%v tokens=%d+%d",
 			r.Method, r.URL.Path, resp.StatusCode, a.Name(), ident.ID, ident.Source,

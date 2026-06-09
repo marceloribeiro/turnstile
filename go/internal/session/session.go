@@ -22,6 +22,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"strings"
+	"sync"
 
 	"turnstile/internal/adapter"
 )
@@ -33,7 +34,14 @@ const (
 	SourceHeader       Source = "header"
 	SourceInferred     Source = "inferred"
 	SourceUnattributed Source = "unattributed"
+	// SourceLinked marks a turn resolved by following an OpenAI Responses-API
+	// previous_response_id back to the session that produced it.
+	SourceLinked Source = "linked"
 )
+
+// maxLinks bounds the response_id → session map so a long-lived process can't grow
+// it without limit; an evicted link just degrades that chain to anchor inference.
+const maxLinks = 100_000
 
 // Identity is the resolved session plus its linked rollup attributes.
 type Identity struct {
@@ -47,11 +55,46 @@ type Identity struct {
 // Resolver turns a request's headers + extracted meta into an Identity.
 type Resolver struct {
 	salt []byte
+
+	linkMu sync.RWMutex
+	links  map[string]string // response id → session id (Responses-API chain)
 }
 
 // NewResolver builds a resolver. The salt feeds the HMAC for key fingerprints and
 // session hashes; a stable salt across restarts keeps fingerprints comparable.
-func NewResolver(salt []byte) *Resolver { return &Resolver{salt: salt} }
+func NewResolver(salt []byte) *Resolver {
+	return &Resolver{salt: salt, links: make(map[string]string)}
+}
+
+// LinkResponse records that a provider response id belongs to a session, so a
+// later turn referencing it via previous_response_id resolves to the same
+// trajectory. Safe for concurrent use; bounded in size.
+func (r *Resolver) LinkResponse(responseID, sessionID string) {
+	if responseID == "" || sessionID == "" {
+		return
+	}
+	r.linkMu.Lock()
+	defer r.linkMu.Unlock()
+	if len(r.links) >= maxLinks {
+		// Best-effort eviction: drop a batch (map order is randomized) to bound
+		// memory. Losing a link only degrades that chain to anchor inference.
+		dropped := 0
+		for k := range r.links {
+			delete(r.links, k)
+			if dropped++; dropped >= maxLinks/2 {
+				break
+			}
+		}
+	}
+	r.links[responseID] = sessionID
+}
+
+func (r *Resolver) linkedSession(responseID string) (string, bool) {
+	r.linkMu.RLock()
+	defer r.linkMu.RUnlock()
+	sid, ok := r.links[responseID]
+	return sid, ok
+}
 
 // Resolve applies the Q1 precedence.
 func (r *Resolver) Resolve(h http.Header, meta adapter.RequestMeta) Identity {
@@ -65,7 +108,15 @@ func (r *Resolver) Resolve(h http.Header, meta adapter.RequestMeta) Identity {
 		return id
 	}
 
-	// 2. (OpenAI Responses API previous_response_id chain → M8.)
+	// 2. OpenAI Responses-API chain: a turn that references a prior response id
+	//    joins that response's session (recorded via LinkResponse on completion).
+	if meta.PreviousResponseID != "" {
+		if sid, ok := r.linkedSession(meta.PreviousResponseID); ok {
+			id.ID = sid
+			id.Source = SourceLinked
+			return id
+		}
+	}
 
 	// 3. Anchor-hash inference. The real key combines the conversation root with
 	//    the key fingerprint and the user to de-collide identical openings across

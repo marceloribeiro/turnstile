@@ -42,6 +42,10 @@ type Usage struct {
 	CompletionTokens int
 	ReportedCost     float64
 	HasReportedCost  bool
+	// ResponseID is the provider's id for this response, when the adapter can read
+	// it. Used to link an OpenAI Responses-API turn to the next one that references
+	// it via previous_response_id. Empty for adapters/providers without it.
+	ResponseID string
 }
 
 // Adapter encapsulates one provider's wire specifics.

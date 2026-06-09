@@ -93,6 +93,57 @@ func containsRaw(s, sub string) bool {
 	})()
 }
 
+func TestPreviousResponseIDLinksToSession(t *testing.T) {
+	r := NewResolver([]byte("salt"))
+	h := hdr("Authorization", "Bearer sk-abc")
+
+	// Turn 1: no previous id → inferred from the anchor. The proxy records the
+	// response id once the call completes.
+	turn1 := r.Resolve(h, adapter.RequestMeta{Anchor: "sys\x00start", User: "u1"})
+	if turn1.Source != SourceInferred {
+		t.Fatalf("turn1 expected inferred, got %q", turn1.Source)
+	}
+	r.LinkResponse("resp_1", turn1.ID)
+
+	// Turn 2 references resp_1 with a *different* anchor (just the new message) yet
+	// still joins turn1's session via the link.
+	turn2 := r.Resolve(h, adapter.RequestMeta{Anchor: "sys\x00follow up", User: "u1", PreviousResponseID: "resp_1"})
+	if turn2.Source != SourceLinked {
+		t.Fatalf("turn2 expected linked, got %q", turn2.Source)
+	}
+	if turn2.ID != turn1.ID {
+		t.Errorf("linked turn must join turn1's session: %q vs %q", turn2.ID, turn1.ID)
+	}
+
+	// Turn 3 chains off turn2's response → still one session.
+	r.LinkResponse("resp_2", turn2.ID)
+	turn3 := r.Resolve(h, adapter.RequestMeta{PreviousResponseID: "resp_2"})
+	if turn3.ID != turn1.ID {
+		t.Errorf("chain must stay on one session: %q vs %q", turn3.ID, turn1.ID)
+	}
+}
+
+func TestUnknownPreviousResponseIDFallsBack(t *testing.T) {
+	r := NewResolver([]byte("salt"))
+	h := hdr("Authorization", "Bearer sk-abc")
+
+	// An unknown (e.g. evicted) previous id falls through to anchor inference.
+	id := r.Resolve(h, adapter.RequestMeta{Anchor: "sys\x00q", PreviousResponseID: "resp_missing"})
+	if id.Source != SourceInferred {
+		t.Errorf("unknown previous id should fall back to inference, got %q", id.Source)
+	}
+
+	// An explicit session header still wins over a link.
+	r.LinkResponse("resp_h", "infer:whatever")
+	hid := r.Resolve(
+		hdr("X-Turnstile-Session", "explicit", "Authorization", "Bearer sk-abc"),
+		adapter.RequestMeta{PreviousResponseID: "resp_h"},
+	)
+	if hid.Source != SourceHeader || hid.ID != "sess:explicit" {
+		t.Errorf("explicit header must win over link: %q/%q", hid.Source, hid.ID)
+	}
+}
+
 func TestSanitizeBoundsAndStrips(t *testing.T) {
 	r := NewResolver([]byte("salt"))
 	id := r.Resolve(hdr("X-Turnstile-Session", "ab\x00\x07cd"), adapter.RequestMeta{})

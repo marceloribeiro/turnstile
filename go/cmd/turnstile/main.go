@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"turnstile/internal/adapter"
+	"turnstile/internal/adapter/openai"
 	"turnstile/internal/adapter/openrouter"
 	"turnstile/internal/config"
 	"turnstile/internal/control"
@@ -36,10 +37,13 @@ func main() {
 	cfg := config.Load()
 
 	rec := metrics.NewRecorder(10000)
-	// M2: OpenRouter is the lead/default adapter, registered as the registry
-	// fallback so all traffic routes to it (parity with M1). M8/M9 add OpenAI /
-	// Anthropic adapters ahead of it.
-	reg := adapter.NewRegistry(openrouter.New(cfg.UpstreamBase))
+	// OpenRouter is the fallback (handles /api/v1/ and anything unmatched). The
+	// OpenAI adapter is registered ahead of it and claims the /v1/ surface
+	// (chat/completions + responses). Anthropic will slot in here next.
+	reg := adapter.NewRegistry(
+		openrouter.New(cfg.UpstreamBase),
+		openai.New(cfg.OpenAIBase),
+	)
 
 	// M3: session resolver. A configured salt keeps key fingerprints / session
 	// hashes stable across restarts; otherwise we generate an ephemeral one.
