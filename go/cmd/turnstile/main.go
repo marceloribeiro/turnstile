@@ -20,6 +20,7 @@ import (
 
 	"turnstile/internal/adapter"
 	"turnstile/internal/adapter/anthropic"
+	"turnstile/internal/adapter/gemini"
 	"turnstile/internal/adapter/openai"
 	"turnstile/internal/adapter/openrouter"
 	"turnstile/internal/config"
@@ -39,13 +40,15 @@ func main() {
 
 	rec := metrics.NewRecorder(10000)
 	// OpenRouter is the fallback (handles /api/v1/ and anything unmatched).
-	// Match-first adapters are tried in order: Anthropic first (it claims
-	// /v1/messages + anthropic-version/x-api-key), then OpenAI (which broadly
-	// claims the rest of /v1/). Order matters — OpenAI's /v1/ prefix would
-	// otherwise swallow /v1/messages.
+	// Match-first adapters are tried in order; OpenAI is LAST among them because it
+	// broadly claims /v1/, which would otherwise swallow Anthropic's /v1/messages
+	// and Gemini's /v1/models/...:generateContent. Anthropic and Gemini match on
+	// their distinctive paths/headers, so their order relative to each other is
+	// irrelevant — only that both precede OpenAI.
 	reg := adapter.NewRegistry(
 		openrouter.New(cfg.UpstreamBase),
 		anthropic.New(cfg.AnthropicBase),
+		gemini.New(cfg.GeminiBase),
 		openai.New(cfg.OpenAIBase),
 	)
 

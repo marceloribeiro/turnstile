@@ -6,11 +6,13 @@ not a product commitment.
 ## Built
 
 - **Go data plane** — transparent streaming proxy with a sacred latency gate,
-  provider adapter interface (OpenRouter implemented), session resolution
-  (header → anchor-hash inference → per-key bucket), metering + pricing,
-  enforcement (per-session budget ceiling, loop detection, manual kill),
-  control-plane REST + SSE API, and a telemetry client that ships hashed
-  aggregates. Stdlib-only, fail-open, self-instrumented.
+  provider adapters for **OpenRouter, OpenAI** (Chat Completions + Responses API,
+  with `previous_response_id` chain resolution), **Anthropic** (Messages API), and
+  **Gemini** (Generative Language API), session resolution (header → anchor-hash
+  inference → per-key bucket), metering + pricing, enforcement (per-session budget
+  ceiling, loop detection, manual kill), control-plane REST + SSE API, and a
+  telemetry client that ships hashed aggregates. Stdlib-only, fail-open,
+  self-instrumented.
 - **FastAPI control plane** — multi-tenant auth (JWT), organizations / members /
   invitations, projects, per-deployment ingest keys (sha256-hashed), the
   telemetry ingest endpoint, the dashboard read API, and live updates over Redis
@@ -22,13 +24,10 @@ not a product commitment.
 ## Planned
 
 ### Provider adapters
-- **OpenAI** direct adapter (Chat Completions **and** the Responses API, with
-  `previous_response_id` trajectory resolution).
-- **Anthropic** direct adapter.
-- **Gemini** adapter.
-
-The adapter interface (`go/internal/adapter`) is the extension point; one running
-instance serves all providers and routes by request shape.
+Direct adapters for **OpenAI, Anthropic, and Gemini** now ship alongside the
+OpenRouter fallback. The adapter interface (`go/internal/adapter`) is the
+extension point; one running instance serves all providers and routes by request
+shape. Further providers (e.g. Bedrock, Vertex) slot in the same way.
 
 ### Packaging & deployment
 - Docker image for the data plane and published install/runbook docs.

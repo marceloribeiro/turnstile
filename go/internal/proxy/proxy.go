@@ -73,7 +73,11 @@ func New(reg *adapter.Registry, resolver *session.Resolver, metering Metering, e
 
 var (
 	sseDataPrefix = []byte("data:")
-	usageMarker   = []byte(`"usage"`)
+	// usageMarker is the cheap pre-filter for which SSE frames are worth parsing
+	// for usage. It matches "usage" (OpenAI/OpenRouter/Anthropic) and the substring
+	// in "usageMetadata" (Gemini). A false positive just runs ParseUsage, which
+	// returns false — no correctness impact, negligible cost off the forward path.
+	usageMarker = []byte("usage")
 )
 
 // hop-by-hop headers are connection-specific and must not be forwarded.

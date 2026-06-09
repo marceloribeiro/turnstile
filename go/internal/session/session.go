@@ -98,7 +98,7 @@ func (r *Resolver) linkedSession(responseID string) (string, bool) {
 
 // Resolve applies the Q1 precedence.
 func (r *Resolver) Resolve(h http.Header, meta adapter.RequestMeta) Identity {
-	keyFP := r.fingerprint(bearer(h))
+	keyFP := r.fingerprint(apiKey(h))
 	id := Identity{User: meta.User, KeyFP: keyFP, Model: meta.Model}
 
 	// 1. Explicit header — authoritative, no guessing.
@@ -141,9 +141,20 @@ func (r *Resolver) fingerprint(s string) string {
 	return hex.EncodeToString(mac.Sum(nil)[:16])
 }
 
-// bearer extracts the API token from the Authorization header (never stored raw).
-func bearer(h http.Header) string {
-	return strings.TrimSpace(strings.TrimPrefix(h.Get("Authorization"), "Bearer "))
+// apiKey extracts the provider API token across the auth styles Turnstile sees —
+// OpenAI/OpenRouter `Authorization: Bearer`, Anthropic `x-api-key`, Gemini
+// `x-goog-api-key` — so the key fingerprint de-collides sessions for every
+// provider, not just bearer-auth ones. The raw key is never stored (Q9); only its
+// salted fingerprint. (Gemini's `?key=` query form isn't visible here; SDKs that
+// send the header are fingerprinted, query-only auth falls back to anchor+user.)
+func apiKey(h http.Header) string {
+	if v := strings.TrimSpace(strings.TrimPrefix(h.Get("Authorization"), "Bearer ")); v != "" {
+		return v
+	}
+	if v := strings.TrimSpace(h.Get("X-Api-Key")); v != "" {
+		return v
+	}
+	return strings.TrimSpace(h.Get("X-Goog-Api-Key"))
 }
 
 // sanitize enforces the Q1 ID contract: opaque, bounded, no control characters.
