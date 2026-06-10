@@ -1,0 +1,8 @@
+{
+  "production": {
+    "server": "homemarket-web01",
+    "github": "git@github.com-marceloribeiro:marceloribeiro/turnstile.git",
+    "deploy_location": "/home/ubuntu/turnstile-marketing",
+    "deploy_branch": "main"
+  }
+}

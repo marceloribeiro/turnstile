@@ -1,0 +1,18 @@
+[Unit]
+Description=turnstileguard.com — Turnstile marketing site (Next.js)
+After=network.target
+
+[Service]
+ExecStart=/home/ubuntu/.nvm/versions/node/v20.18.0/bin/node server.js
+Restart=always
+RestartSec=10
+User=ubuntu
+Group=ubuntu
+Environment=PATH=/home/ubuntu/.nvm/versions/node/v20.18.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=NODE_ENV=production
+Environment=PORT=8070
+Environment=HOSTNAME=0.0.0.0
+WorkingDirectory=/home/ubuntu/turnstile-marketing/current
+
+[Install]
+WantedBy=multi-user.target

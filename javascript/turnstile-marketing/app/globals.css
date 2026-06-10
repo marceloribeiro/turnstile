@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * Turnstile marketing — same instrument palette as the dashboard.
+ * Calm graphite, a single steel-blue accent, semantic green for
+ * "dollars prevented", semantic red for "blocked / killed".
+ * ------------------------------------------------------------------ */
+:root {
+  color-scheme: dark;
+  --bg: #0d1016;
+  --fg: #e6e9ef;
+  --muted: rgba(230, 233, 239, 0.55);
+  --faint: rgba(230, 233, 239, 0.35);
+  --line: rgba(255, 255, 255, 0.08);
+  --accent: #7fb0dd; /* steel / ice blue */
+  --accent-strong: #9ecbef;
+  --positive: #6fcf9e; /* dollars saved / success */
+  --danger: #e98c8c; /* blocked / killed */
+}
+
+@theme inline {
+  --font-sans: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-accent: var(--accent);
+  --color-positive: var(--positive);
+  --color-danger: var(--danger);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--bg);
+  /* one faint overhead light for depth — readability first */
+  background-image: radial-gradient(
+    90% 55% at 50% -10%,
+    rgba(150, 175, 205, 0.1),
+    transparent 70%
+  );
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(127, 176, 221, 0.28);
+}
+
+/* ---- Frosted sticky top bar ---- */
+.topbar {
+  background: rgba(13, 16, 22, 0.62);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ---- Frosted glass cards ---- */
+.glass {
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 16px 40px -20px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.glass-strong {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 22px 52px -22px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.55rem;
+  padding: 0.7rem 1.15rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn-primary {
+  color: #0c1118;
+  background: var(--accent);
+  border: 1px solid transparent;
+}
+.btn-primary:hover {
+  background: var(--accent-strong);
+}
+.btn-ghost {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ---- Chips / labels / text ---- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 0.28rem 0.7rem;
+  border-radius: 0.4rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--muted);
+}
+.kicker {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.muted {
+  color: var(--muted);
+}
+.faint {
+  color: var(--faint);
+}
+.link {
+  color: var(--accent);
+  transition: color 0.15s;
+}
+.link:hover {
+  color: var(--accent-strong);
+}
+.stat-accent {
+  color: var(--positive);
+}
+
+/* Tabular figures for metrics — the instrument feel. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ---- Code block ---- */
+.code {
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  line-height: 1.7;
+  background: rgba(8, 10, 14, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.7rem;
+  overflow-x: auto;
+}
+.code .c-dim {
+  color: var(--faint);
+}
+.code .c-accent {
+  color: var(--accent-strong);
+}
+.code .c-pos {
+  color: var(--positive);
+}
+.code .c-danger {
+  color: var(--danger);
+}
+
+/* Hairline divider between major sections */
+.hairline {
+  border-top: 1px solid var(--line);
+}
+
+/* `.reveal` is a structural marker only — content is always visible so that
+   crawlers, no-JS visitors, and static full-page screenshots all render
+   correctly. (Kept as a hook in case a scroll-driven entrance is added later.) */
+.reveal {
+  opacity: 1;
+}
+
+/* Animated "live" pulse dot */
+.pulse {
+  position: relative;
+}
+.pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--positive);
+  animation: pulse 2s ease-out infinite;
+}
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  70%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}

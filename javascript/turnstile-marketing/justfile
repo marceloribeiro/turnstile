@@ -1,0 +1,65 @@
+set dotenv-load := true
+
+SITE := "turnstile-marketing"
+
+# ─── Dependencies ────────────────────────────────────────────────────────────
+
+install:
+    npm install
+
+# ─── Deploy ──────────────────────────────────────────────────────────────────
+
+# Deploy to production: build locally, rsync standalone bundle to server, restart systemd. No remote npm install/build.
+deploy env="production":
+    chmod +x deploy.sh && ./deploy.sh {{env}}
+
+# SSH to server and install nginx http config from current/nginx/ into /opt/nginx, then reload.
+setup-nginx-http:
+    #!/usr/bin/env bash
+    set -e
+    SERVER=$(node -e "const c=require('./deploy.json'); console.log(c.production.server)")
+    DEPLOY_LOCATION=$(node -e "const c=require('./deploy.json'); console.log(c.production.deploy_location)")
+    ssh "$SERVER" "set -e; cd $DEPLOY_LOCATION/current && sudo cp nginx/nginx-http.conf /opt/nginx/conf/sites-available/{{ SITE }}.conf && sudo ln -sf /opt/nginx/conf/sites-available/{{ SITE }}.conf /opt/nginx/conf/sites-enabled/{{ SITE }}.conf && sudo /opt/nginx/sbin/nginx -t && (sudo /opt/nginx/sbin/nginx -s reload 2>/dev/null || sudo /opt/nginx/sbin/nginx)"
+    echo "Nginx HTTP config installed on server."
+
+# SSH to server and install nginx https config from current/nginx/ into /opt/nginx, then reload.
+setup-nginx-https:
+    #!/usr/bin/env bash
+    set -e
+    SERVER=$(node -e "const c=require('./deploy.json'); console.log(c.production.server)")
+    DEPLOY_LOCATION=$(node -e "const c=require('./deploy.json'); console.log(c.production.deploy_location)")
+    ssh "$SERVER" "set -e; cd $DEPLOY_LOCATION/current && sudo cp nginx/nginx-https.conf /opt/nginx/conf/sites-available/{{ SITE }}.conf && sudo ln -sf /opt/nginx/conf/sites-available/{{ SITE }}.conf /opt/nginx/conf/sites-enabled/{{ SITE }}.conf && sudo /opt/nginx/sbin/nginx -t && (sudo /opt/nginx/sbin/nginx -s reload 2>/dev/null || sudo /opt/nginx/sbin/nginx)"
+    echo "Nginx HTTPS config installed on server."
+
+# SSH to server and install systemd unit files from current/systemd/ into /etc/systemd/system/.
+setup-systemd:
+    #!/usr/bin/env bash
+    set -e
+    SERVER=$(node -e "const c=require('./deploy.json'); console.log(c.production.server)")
+    DEPLOY_LOCATION=$(node -e "const c=require('./deploy.json'); console.log(c.production.deploy_location)")
+    for unit in systemd/*.service; do
+      name=$(basename "$unit")
+      ssh "$SERVER" "sudo cp $DEPLOY_LOCATION/current/$unit /etc/systemd/system/$name && sudo systemctl daemon-reload && sudo systemctl enable $name"
+    done
+    echo "Systemd units installed on server."
+
+# ─── App ─────────────────────────────────────────────────────────────────────
+
+up:
+    npm run dev
+
+build:
+    npm run build
+
+start:
+    npm run start
+
+# ─── Quality ─────────────────────────────────────────────────────────────────
+
+lint:
+    npm run lint
+
+typecheck:
+    npx tsc --noEmit
+
+check: lint typecheck
