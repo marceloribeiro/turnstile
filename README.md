@@ -1,4 +1,9 @@
-# Turnstile
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/turnstile-logo-light.png" />
+    <img src="docs/images/turnstile-logo.png" alt="Turnstile" width="360" />
+  </picture>
+</p>
 
 **Turnstile kills the one rogue LLM session — a runaway agent loop or a blown budget — in real time, without taking down the rest of your app.**
 
@@ -6,6 +11,8 @@
 [![API CI](https://github.com/marceloribeiro/turnstile/actions/workflows/api.yml/badge.svg)](https://github.com/marceloribeiro/turnstile/actions/workflows/api.yml)
 [![Web CI](https://github.com/marceloribeiro/turnstile/actions/workflows/web.yml/badge.svg)](https://github.com/marceloribeiro/turnstile/actions/workflows/web.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+**Website:** [turnstileguard.com](https://turnstileguard.com)
 
 > **Status:** working end-to-end via OpenRouter today; direct OpenAI and Anthropic adapters in progress. See the [roadmap](docs/ROADMAP.md).
 
