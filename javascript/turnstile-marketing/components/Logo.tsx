@@ -8,7 +8,7 @@ export function Logo({ className = "" }: { className?: string }) {
       alt="Turnstile"
       width={1207}
       height={413}
-      className={`h-7 w-auto select-none ${className}`}
+      className={`w-auto select-none ${className || "h-7"}`}
     />
   );
 }

@@ -5,9 +5,9 @@ const GITHUB = "https://github.com/marceloribeiro/turnstile";
 export function Nav() {
   return (
     <header className="topbar sticky top-0 z-50">
-      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+      <nav className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5">
         <a href="#top" className="shrink-0">
-          <Logo />
+          <Logo className="h-14" />
         </a>
         <div className="hidden items-center gap-8 text-sm md:flex">
           <a href="#problem" className="muted transition-colors hover:text-[var(--fg)]">
