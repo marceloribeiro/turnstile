@@ -23,6 +23,14 @@ not a product commitment.
 
 ## Planned
 
+### Evals — scoring production sessions
+Turnstile already sees every request and response, which makes it the one place
+that can evaluate production traffic with no application instrumentation. The
+end state is a breaker that trips on a **quality** regression, not just on cost
+or loop detection. Structural scorers and the design have landed
+(`go/internal/score`, [docs/EVALS.md](EVALS.md)); adapter content extraction,
+golden-set harvesting, a CI regression gate and the quality breaker follow.
+
 ### Provider adapters
 Direct adapters for **OpenAI, Anthropic, and Gemini** now ship alongside the
 OpenRouter fallback. The adapter interface (`go/internal/adapter`) is the
