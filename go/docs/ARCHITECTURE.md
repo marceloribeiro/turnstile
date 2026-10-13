@@ -22,7 +22,7 @@ They share state (the meter store + enforcer + event broker) but never block eac
 |---------|----------------|
 | `config` | Env-driven configuration with defaults. |
 | `proxy` | The transparent streaming proxy. Reads body, routes via the adapter registry, resolves session, runs the **synchronous enforcement gate**, forwards, streams the response back unbuffered, and (async) meters + records. Owns the latency budget. |
-| `adapter` | `Adapter` interface (`Name`/`Match`/`ForwardURL`/`ExtractRequestMeta`/`ParseUsage`/`NativeError`) + `Registry` (first-match, fallback). `openrouter/` is the first implementation. |
+| `adapter` | `Adapter` interface (`Name`/`Match`/`ForwardURL`/`ExtractRequestMeta`/`ParseUsage`/`NativeError`) + `Registry` (first-match, fallback). Implementations: `openai/` (Chat Completions + Responses API), `anthropic/` (Messages API), `gemini/` (Generative Language API), and `openrouter/` (fallback for any OpenAI-compatible endpoint). |
 | `session` | Resolves a request to a trajectory: `X-Turnstile-Session` header → anchor-hash inference (`hash(system+first-user) + key-fp + user`) → per-key unattributed bucket. Always links native fields for rollups. |
 | `pricing` | Cost engine. Precedence: provider-reported cost → customer override → loaded table → unknown. Loads OpenRouter's `/models` table. |
 | `meter` | Accumulates per-session spend (`Record` aggregates) behind a `Store` interface (`MemStore` in-memory). Also satisfies the enforcer's `Ledger`. |
@@ -34,7 +34,7 @@ They share state (the meter store + enforcer + event broker) but never block eac
 
 ## The adapter pattern (extension point)
 
-A single Turnstile instance serves all providers. For each request the `Registry` calls every adapter's `Match()` and uses the first that claims it (OpenRouter is the fallback). The adapter then provides the upstream URL and the provider-specific parsing. This is how new providers (e.g. direct OpenAI and Anthropic) are added without touching the proxy — each new provider is one `Adapter` implementation.
+A single Turnstile instance serves all providers. For each request the `Registry` calls every adapter's `Match()` and uses the first that claims it (OpenRouter is the fallback). The adapter then provides the upstream URL and the provider-specific parsing. This is how OpenAI, Anthropic, and Gemini were added without touching the proxy, and how further providers (e.g. Bedrock, Vertex) slot in — each new provider is one `Adapter` implementation.
 
 ## The latency principle (why it's fast)
 

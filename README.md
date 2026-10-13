@@ -14,10 +14,11 @@
 
 **Website:** [turnstileguard.com](https://turnstileguard.com)
 
-> **Status:** working end-to-end via OpenRouter today; direct OpenAI and Anthropic adapters in progress. See the [roadmap](docs/ROADMAP.md).
+> **Status:** working end-to-end with direct adapters for **OpenAI, Anthropic, and Gemini**, plus OpenRouter for any OpenAI-compatible endpoint. See the [roadmap](docs/ROADMAP.md).
 
-Turnstile is a transparent proxy that sits between your application and any
-**OpenAI-compatible endpoint** (with direct provider adapters landing). It meters
+Turnstile is a transparent proxy that sits between your application and your
+LLM provider — **OpenAI, Anthropic, and Gemini** directly, or any
+**OpenAI-compatible endpoint** via OpenRouter. It meters
 every AI session in real time and trips a circuit breaker the instant *one*
 session goes rogue — a runaway agent loop or a blown budget — **without taking
 down the rest of your app**. Point your LLM client's base URL at Turnstile and
@@ -88,7 +89,7 @@ Today the data plane needs an ingest key minted in the web app, so the order is
 > (tracked in the [roadmap](docs/ROADMAP.md)).
 
 Want to just see traffic flow through? The [`samples/`](samples) folder has tiny
-interactive CLIs for OpenRouter, OpenAI, and Anthropic — point one at a running
+interactive CLIs for OpenRouter, OpenAI, Anthropic, and Gemini — point one at a running
 data plane and stream answers from your terminal (`just install && just console`).
 
 ## How it works

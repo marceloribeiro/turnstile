@@ -1,12 +1,13 @@
 # Turnstile — Documentation
 
-Turnstile is a local proxy that sits between your app and any OpenAI-compatible
-endpoint (direct provider adapters landing), watches every AI session in real
+Turnstile is a local proxy that sits between your app and your LLM provider
+(direct OpenAI, Anthropic, and Gemini adapters, or any OpenAI-compatible
+endpoint via OpenRouter), watches every AI session in real
 time, and trips a circuit breaker the instant *one* session goes rogue — a
 runaway agent loop or a blown budget — without taking down the rest of your app.
 
-> **Status:** working end-to-end via OpenRouter today; direct OpenAI and
-> Anthropic adapters in progress. See [ROADMAP.md](ROADMAP.md).
+> **Status:** working end-to-end with direct OpenAI, Anthropic, and Gemini
+> adapters, plus the OpenRouter fallback. See [ROADMAP.md](ROADMAP.md).
 
 This directory holds cross-cutting documentation. Each service also ships its own
 deeper docs.
